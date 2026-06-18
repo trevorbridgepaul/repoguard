@@ -2,7 +2,7 @@
 Enums for the RepoGuard domain.
 
 Enums define the fixed set of valid values for concepts that have a
-bounded, known list of options — like severity levels or scan states.
+bounded, known list of options.
 Using enums instead of raw strings prevents typos and makes the code
 self-documenting.
 """

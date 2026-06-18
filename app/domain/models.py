@@ -28,8 +28,6 @@ class PolicyInfo:
     This is the data representation of a policy: its name, what it does,
     and what severity violations it produces by default.
 
-    Think of it as the "label on the box" — not the box itself.
-
     Fields:
         policy_id   Unique machine-readable identifier, e.g. "no_secrets".
                     Used to reference a policy in findings and API responses.
