@@ -12,7 +12,7 @@ Why dataclasses instead of Pydantic models?
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 import uuid
 
@@ -57,6 +57,8 @@ class Finding:
         policy_id   Which policy produced this finding. Matches PolicyInfo.policy_id.
         path        File path where the violation was found, relative to the repo root.
                     e.g. "src/config.py" not "/Users/trevor/myrepo/src/config.py"
+                    For repo-level checks with no specific file (e.g. missing README),
+                    use "." to represent the repo root. Always a string, never None.
         message     Human-readable description of what was found.
                     e.g. "Possible AWS secret key detected on this line."
         severity    How serious this specific violation is.
@@ -116,7 +118,7 @@ class ScanResult:
     scan_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     status: ScanStatus = ScanStatus.PENDING
     findings: list[Finding] = field(default_factory=list)
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     completed_at: Optional[datetime] = None
     error: Optional[str] = None
 
