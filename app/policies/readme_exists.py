@@ -6,7 +6,7 @@ A missing README is a repo-level issue, not tied to any specific file,
 so findings use path="." to indicate the repository root.
 """
 
-import os
+from pathlib import Path
 
 from app.domain.enums import Severity
 from app.domain.models import Finding
@@ -14,7 +14,7 @@ from app.domain.models import Finding
 POLICY_ID = "readme_exists"
 
 
-def check(repo_path: str) -> list[Finding]:
+def check_readme_exists(repo_path: str) -> list[Finding]:
     """
     Check whether README.md exists at the root of repo_path.
 
@@ -25,9 +25,9 @@ def check(repo_path: str) -> list[Finding]:
         An empty list if README.md is found.
         A list with one Finding if README.md is missing.
     """
-    readme_path = os.path.join(repo_path, "README.md")
+    readme_path = Path(repo_path) / "README.md"
 
-    if os.path.isfile(readme_path):
+    if readme_path.is_file():
         return []
 
     return [

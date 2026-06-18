@@ -8,8 +8,6 @@ no policies, no scanner, no HTTP involved.
 import uuid
 from datetime import timezone
 
-import pytest
-
 from app.domain.enums import Severity, ScanStatus
 from app.domain.models import Finding, ScanResult
 
