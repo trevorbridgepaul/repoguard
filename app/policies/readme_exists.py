@@ -10,31 +10,35 @@ from pathlib import Path
 
 from app.domain.enums import Severity
 from app.domain.models import Finding
+from app.policies.base import Policy
 
 POLICY_ID = "readme_exists"
 
 
-def check_readme_exists(repo_path: str) -> list[Finding]:
-    """
-    Check whether README.md exists at the root of repo_path.
+class ReadmeExistsPolicy(Policy):
+    policy_id = POLICY_ID
 
-    Args:
-        repo_path: Absolute path to the repository directory on disk.
+    def check(self, repo_path: str) -> list[Finding]:
+        """
+        Check whether README.md exists at the root of repo_path.
 
-    Returns:
-        An empty list if README.md is found.
-        A list with one Finding if README.md is missing.
-    """
-    readme_path = Path(repo_path) / "README.md"
+        Args:
+            repo_path: Absolute path to the repository directory on disk.
 
-    if readme_path.is_file():
-        return []
+        Returns:
+            An empty list if README.md is found.
+            A list with one Finding if README.md is missing.
+        """
+        readme_path = Path(repo_path) / "README.md"
 
-    return [
-        Finding(
-            policy_id=POLICY_ID,
-            path=".",
-            message="README.md is missing from the repository root.",
-            severity=Severity.MEDIUM,
-        )
-    ]
+        if readme_path.is_file():
+            return []
+
+        return [
+            Finding(
+                policy_id=POLICY_ID,
+                path=".",
+                message="README.md is missing from the repository root.",
+                severity=Severity.MEDIUM,
+            )
+        ]

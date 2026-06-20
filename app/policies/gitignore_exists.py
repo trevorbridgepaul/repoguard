@@ -10,31 +10,35 @@ from pathlib import Path
 
 from app.domain.enums import Severity
 from app.domain.models import Finding
+from app.policies.base import Policy
 
 POLICY_ID = "gitignore_exists"
 
 
-def check_gitignore_exists(repo_path: str) -> list[Finding]:
-    """
-    Check whether .gitignore exists at the root of repo_path.
+class GitignoreExistsPolicy(Policy):
+    policy_id = POLICY_ID
 
-    Args:
-        repo_path: Absolute path to the repository directory on disk.
+    def check(self, repo_path: str) -> list[Finding]:
+        """
+        Check whether .gitignore exists at the root of repo_path.
 
-    Returns:
-        An empty list if .gitignore is found.
-        A list with one Finding if .gitignore is missing.
-    """
-    gitignore_path = Path(repo_path) / ".gitignore"
+        Args:
+            repo_path: Absolute path to the repository directory on disk.
 
-    if gitignore_path.is_file():
-        return []
+        Returns:
+            An empty list if .gitignore is found.
+            A list with one Finding if .gitignore is missing.
+        """
+        gitignore_path = Path(repo_path) / ".gitignore"
 
-    return [
-        Finding(
-            policy_id=POLICY_ID,
-            path=".",
-            message=".gitignore is missing from the repository root.",
-            severity=Severity.LOW,
-        )
-    ]
+        if gitignore_path.is_file():
+            return []
+
+        return [
+            Finding(
+                policy_id=POLICY_ID,
+                path=".",
+                message=".gitignore is missing from the repository root.",
+                severity=Severity.LOW,
+            )
+        ]
