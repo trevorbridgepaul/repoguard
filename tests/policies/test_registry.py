@@ -13,13 +13,14 @@ from app.policies.registry import get_all_policies, get_policies, get_policy
 def test_get_all_policies_returns_every_registered_policy():
     policies = get_all_policies()
 
-    assert len(policies) == 4
+    assert len(policies) == 5
     policy_ids = {p.policy_id for p in policies}
     assert policy_ids == {
         "readme_exists",
         "gitignore_exists",
         "codeowners_exists",
         "no_secrets",
+        "large_files",
     }
 
 
@@ -37,7 +38,7 @@ def test_get_policy_raises_for_unknown_id():
 def test_get_policies_with_none_returns_everything():
     policies = get_policies(None)
 
-    assert len(policies) == 4
+    assert len(policies) == 5
 
 
 def test_get_policies_with_explicit_list_returns_only_those():
