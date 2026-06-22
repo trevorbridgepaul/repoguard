@@ -9,6 +9,7 @@ of importing individual policy modules directly.
 from app.policies.base import Policy
 from app.policies.codeowners_exists import CodeownersExistsPolicy
 from app.policies.gitignore_exists import GitignoreExistsPolicy
+from app.policies.no_secrets import NoSecretsPolicy
 from app.policies.readme_exists import ReadmeExistsPolicy
 
 _REGISTRY: dict[str, Policy] = {
@@ -17,6 +18,7 @@ _REGISTRY: dict[str, Policy] = {
         ReadmeExistsPolicy(),
         GitignoreExistsPolicy(),
         CodeownersExistsPolicy(),
+        NoSecretsPolicy(),
     ]
 }
 
