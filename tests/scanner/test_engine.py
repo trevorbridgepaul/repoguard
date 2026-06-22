@@ -11,7 +11,7 @@ from app.scanner.engine import run_scan
 
 
 def _make_clean_repo(tmp_path):
-    """A repo that satisfies all 3 currently registered policies."""
+    """A repo that satisfies every currently registered policy."""
     (tmp_path / "README.md").write_text("# My Project")
     (tmp_path / ".gitignore").write_text("__pycache__/\n")
     (tmp_path / "CODEOWNERS").write_text("* @owner\n")
@@ -27,8 +27,9 @@ def test_clean_repo_completes_with_no_findings(tmp_path):
     assert result.findings == []
 
 
-def test_empty_repo_collects_one_finding_per_registered_policy(tmp_path):
+def test_empty_repo_collects_one_finding_per_repo_hygiene_policy(tmp_path):
     # tmp_path is empty — every repo-hygiene policy should fire exactly once.
+    # no_secrets has no files to scan, so it contributes nothing here.
     result = run_scan(ScanRequest(repo_path=str(tmp_path)))
 
     assert result.status == ScanStatus.COMPLETE
