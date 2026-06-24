@@ -8,6 +8,7 @@ text (MIT, Apache, an internal copyright notice, etc.), so this only
 checks for a configured substring rather than enforcing exact wording.
 """
 
+import itertools
 from pathlib import Path
 
 from app.domain.enums import Severity
@@ -42,12 +43,14 @@ class LicenseHeaderPolicy(Policy):
             if relative_path.suffix != ".py":
                 continue
 
+            # Only the first `header_lines` lines are read, regardless of
+            # file size — this check never needs the rest of the file.
             try:
-                text = (root / relative_path).read_text(encoding="utf-8")
+                with (root / relative_path).open(encoding="utf-8") as f:
+                    header = "".join(itertools.islice(f, self.header_lines))
             except (UnicodeDecodeError, OSError):
                 continue
 
-            header = "\n".join(text.splitlines()[: self.header_lines])
             if self.header_text not in header:
                 findings.append(
                     Finding(

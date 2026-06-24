@@ -16,6 +16,7 @@ from app.policies.base import Policy
 from app.scanner.file_walker import walk_files
 
 POLICY_ID = "no_secrets"
+MAX_READABLE_BYTES = 5_000_000  # don't read huge files fully into memory
 
 _PATTERNS = [
     (re.compile(r"AKIA[0-9A-Z]{16}"), "Possible AWS access key detected."),
@@ -41,8 +42,12 @@ class NoSecretsPolicy(Policy):
         root = Path(repo_path)
 
         for relative_path in walk_files(repo_path):
+            full_path = root / relative_path
+            if full_path.stat().st_size > MAX_READABLE_BYTES:
+                continue  # large_files already reports oversized files
+
             try:
-                text = (root / relative_path).read_text(encoding="utf-8")
+                text = full_path.read_text(encoding="utf-8")
             except (UnicodeDecodeError, OSError):
                 continue  # binary or unreadable file — not a text secret
 

@@ -3,7 +3,11 @@ Tests for the no_print_statements policy.
 """
 
 from app.domain.enums import Severity
-from app.policies.no_print_statements import NoPrintStatementsPolicy, POLICY_ID
+from app.policies.no_print_statements import (
+    MAX_READABLE_BYTES,
+    NoPrintStatementsPolicy,
+    POLICY_ID,
+)
 
 policy = NoPrintStatementsPolicy()
 
@@ -86,6 +90,15 @@ def test_detects_multiple_print_statements_in_one_file(tmp_path):
 def test_respects_gitignore(tmp_path):
     (tmp_path / ".gitignore").write_text("legacy.py\n")
     (tmp_path / "legacy.py").write_text("print('debug')\n")
+
+    findings = policy.check(str(tmp_path))
+
+    assert findings == []
+
+
+def test_skips_files_over_max_readable_bytes(tmp_path):
+    padding = "x" * (MAX_READABLE_BYTES + 1)
+    (tmp_path / "huge.py").write_text(f"print('hello')\n{padding}")
 
     findings = policy.check(str(tmp_path))
 

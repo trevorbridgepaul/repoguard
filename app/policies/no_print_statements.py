@@ -15,6 +15,7 @@ from app.policies.base import Policy
 from app.scanner.file_walker import walk_files
 
 POLICY_ID = "no_print_statements"
+MAX_READABLE_BYTES = 5_000_000  # don't read huge files fully into memory
 
 _PRINT_PATTERN = re.compile(r"\bprint\s*\(")
 
@@ -33,8 +34,12 @@ class NoPrintStatementsPolicy(Policy):
             if relative_path.suffix != ".py":
                 continue
 
+            full_path = root / relative_path
+            if full_path.stat().st_size > MAX_READABLE_BYTES:
+                continue  # large_files already reports oversized files
+
             try:
-                text = (root / relative_path).read_text(encoding="utf-8")
+                text = full_path.read_text(encoding="utf-8")
             except (UnicodeDecodeError, OSError):
                 continue
 
