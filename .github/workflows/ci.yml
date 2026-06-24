@@ -11,6 +11,22 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.11", "3.13"]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: repoguard
+          POSTGRES_PASSWORD: repoguard
+          POSTGRES_DB: repoguard
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U repoguard"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql+psycopg://repoguard:repoguard@localhost:5432/repoguard
     steps:
       - uses: actions/checkout@v4
 
@@ -21,6 +37,9 @@ jobs:
 
       - name: Install dependencies
         run: pip install -e ".[test]"
+
+      - name: Run migrations
+        run: alembic upgrade head
 
       - name: Run tests
         run: pytest -q
