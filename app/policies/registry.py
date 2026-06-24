@@ -8,6 +8,7 @@ of importing individual policy modules directly.
 
 from app.policies.base import Policy
 from app.policies.codeowners_exists import CodeownersExistsPolicy
+from app.policies.dependency_pinning import DependencyPinningPolicy
 from app.policies.gitignore_exists import GitignoreExistsPolicy
 from app.policies.large_files import LargeFilesPolicy
 from app.policies.license_header import LicenseHeaderPolicy
@@ -25,6 +26,7 @@ _REGISTRY: dict[str, Policy] = {
         LargeFilesPolicy(),
         NoPrintStatementsPolicy(),
         LicenseHeaderPolicy(),
+        DependencyPinningPolicy(),
     ]
 }
 
