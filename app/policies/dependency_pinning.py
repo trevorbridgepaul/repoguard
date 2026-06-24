@@ -23,6 +23,9 @@ POLICY_ID = "dependency_pinning"
 
 class DependencyPinningPolicy(Policy):
     policy_id = POLICY_ID
+    name = "Dependency Pinning"
+    description = "Flags dependencies in requirements.txt that aren't pinned to an exact version."
+    severity = Severity.HIGH
 
     def check(self, repo_path: str) -> list[Finding]:
         requirements_path = Path(repo_path) / "requirements.txt"

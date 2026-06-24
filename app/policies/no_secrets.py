@@ -32,6 +32,9 @@ _PATTERNS = [
 
 class NoSecretsPolicy(Policy):
     policy_id = POLICY_ID
+    name = "No Secrets"
+    description = "Scans files for patterns that look like credentials (AWS keys, API keys, private key headers)."
+    severity = Severity.CRITICAL
 
     def check(self, repo_path: str) -> list[Finding]:
         findings: list[Finding] = []

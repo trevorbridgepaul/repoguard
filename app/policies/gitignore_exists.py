@@ -17,6 +17,9 @@ POLICY_ID = "gitignore_exists"
 
 class GitignoreExistsPolicy(Policy):
     policy_id = POLICY_ID
+    name = ".gitignore Exists"
+    description = "Checks that a .gitignore file is present at the repository root."
+    severity = Severity.LOW
 
     def check(self, repo_path: str) -> list[Finding]:
         """

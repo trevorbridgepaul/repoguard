@@ -9,19 +9,31 @@ never about any specific policy's internals.
 
 from abc import ABC, abstractmethod
 
-from app.domain.models import Finding
+from app.domain.enums import Severity
+from app.domain.models import Finding, PolicyInfo
 
 
 class Policy(ABC):
     """
     A single repository check.
 
-    Subclasses must set a `policy_id` class attribute (a unique,
-    machine-readable identifier, e.g. "readme_exists") and implement
-    `check`.
+    Subclasses must set `policy_id`, `name`, `description`, and
+    `severity` class attributes — these describe the policy and back
+    `info()` and the `GET /policies` endpoint — and implement `check`.
     """
 
     policy_id: str
+    name: str
+    description: str
+    severity: Severity
+
+    def info(self) -> PolicyInfo:
+        return PolicyInfo(
+            policy_id=self.policy_id,
+            name=self.name,
+            description=self.description,
+            severity=self.severity,
+        )
 
     @abstractmethod
     def check(self, repo_path: str) -> list[Finding]:

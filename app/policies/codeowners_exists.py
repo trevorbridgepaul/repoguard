@@ -22,6 +22,9 @@ POLICY_ID = "codeowners_exists"
 
 class CodeownersExistsPolicy(Policy):
     policy_id = POLICY_ID
+    name = "CODEOWNERS Exists"
+    description = "Checks that a CODEOWNERS file is present at the repo root or in .github/."
+    severity = Severity.MEDIUM
 
     def check(self, repo_path: str) -> list[Finding]:
         """
