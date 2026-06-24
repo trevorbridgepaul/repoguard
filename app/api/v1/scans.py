@@ -1,6 +1,8 @@
 """
 Scans API. Both endpoints require a valid JWT (see app/auth) — register
-and log in via app/api/v1/auth.py to get one.
+and log in via app/api/v1/auth.py to get one. Scans are scoped to the
+authenticated user who created them; a different user's GET on the
+same scan_id 404s exactly like an unknown id (see app/storage/db.py).
 
 POST /api/v1/scans   — submit a repo for scanning, run it synchronously,
                         store the result, and return it.
@@ -90,7 +92,7 @@ def create_scan(
 
     request = ScanRequest(repo_path=body.repo_path, policies=body.policies)
     result = run_scan(request)
-    save_scan(db, result)
+    save_scan(db, result, owner_id=current_user.id)
     return ScanResultResponse.from_domain(result)
 
 
@@ -100,7 +102,7 @@ def get_scan_by_id(
     db: Session = Depends(get_db),
     current_user: UserRecord = Depends(get_current_user),
 ) -> ScanResultResponse:
-    result = get_scan(db, scan_id)
+    result = get_scan(db, scan_id, owner_id=current_user.id)
     if result is None:
         raise HTTPException(status_code=404, detail=f"Scan not found: {scan_id}")
     return ScanResultResponse.from_domain(result)
