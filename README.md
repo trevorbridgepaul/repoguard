@@ -27,13 +27,15 @@ Every check, including `.gitignore` handling, runs against the real filesystem �
 - `GET /api/v1/scans/{scan_id}` — poll for a previously submitted scan's result
 - `GET /api/v1/policies` — list every registered policy and its metadata
 
-Scan results are held in memory for the life of the process — there's no database yet.
+Scan results are persisted in Postgres.
 
 ## Running locally
 
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install -e ".[test]"
+docker compose up -d db
+DATABASE_URL=postgresql+psycopg://repoguard:repoguard@localhost:5432/repoguard .venv/bin/alembic upgrade head
 .venv/bin/uvicorn app.main:app --reload
 ```
 
@@ -42,13 +44,14 @@ Then visit `http://127.0.0.1:8000/docs` for interactive API docs.
 ## Running with Docker
 
 ```bash
-docker build -t repoguard .
-docker run -p 8000:8000 -v "$(pwd)":/scan-target:ro repoguard
+docker compose up
 ```
 
-The container only has its own code on disk — mount whatever repo you want to scan (read-only is enough) and pass its in-container path, e.g. `/scan-target`, as `repo_path` when calling `POST /api/v1/scans`.
+This starts Postgres and the API together; migrations run automatically when the `app` container starts. The container only has its own code on disk by default — to scan a repo from the host, add a volume mount under the `app` service in `docker-compose.yml` (e.g. `- /path/to/your/repo:/scan-target:ro`) and pass that in-container path, e.g. `/scan-target`, as `repo_path` when calling `POST /api/v1/scans`.
 
 ## Tests
+
+Storage and API tests need a real Postgres connection with migrations applied (`docker compose up -d db` then `alembic upgrade head`, as above) — policy and scanner tests don't touch the database at all.
 
 ```bash
 .venv/bin/python -m pytest -q
@@ -58,6 +61,7 @@ The container only has its own code on disk — mount whatever repo you want to 
 
 - Python
 - FastAPI / Pydantic
+- SQLAlchemy / Alembic / Postgres
 - pathspec (`.gitignore` matching)
 - pytest / httpx
 
@@ -65,5 +69,4 @@ The container only has its own code on disk — mount whatever repo you want to 
 
 These were intentionally deferred to get the core scanning logic working first, not abandoned:
 
-- A real database (currently an in-memory store, cleared on restart)
 - Auth

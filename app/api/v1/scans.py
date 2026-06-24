@@ -14,13 +14,15 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
 from app.domain.enums import Severity, ScanStatus
 from app.domain.models import ScanRequest, ScanResult
 from app.scanner.engine import run_scan
-from app.storage.memory import scan_store
+from app.storage.db import get_scan, save_scan
+from app.storage.engine import get_db
 
 router = APIRouter(prefix="/api/v1", tags=["scans"])
 
@@ -72,7 +74,9 @@ class ScanResultResponse(BaseModel):
 
 
 @router.post("/scans", response_model=ScanResultResponse, status_code=201)
-def create_scan(body: ScanRequestBody) -> ScanResultResponse:
+def create_scan(
+    body: ScanRequestBody, db: Session = Depends(get_db)
+) -> ScanResultResponse:
     if not Path(body.repo_path).is_dir():
         raise HTTPException(
             status_code=400,
@@ -81,13 +85,13 @@ def create_scan(body: ScanRequestBody) -> ScanResultResponse:
 
     request = ScanRequest(repo_path=body.repo_path, policies=body.policies)
     result = run_scan(request)
-    scan_store.save(result)
+    save_scan(db, result)
     return ScanResultResponse.from_domain(result)
 
 
 @router.get("/scans/{scan_id}", response_model=ScanResultResponse)
-def get_scan(scan_id: str) -> ScanResultResponse:
-    result = scan_store.get(scan_id)
+def get_scan_by_id(scan_id: str, db: Session = Depends(get_db)) -> ScanResultResponse:
+    result = get_scan(db, scan_id)
     if result is None:
         raise HTTPException(status_code=404, detail=f"Scan not found: {scan_id}")
     return ScanResultResponse.from_domain(result)
