@@ -2,6 +2,8 @@
 
 RepoGuard is a backend platform tool that scans local code repositories for policy violations — repo hygiene, secrets, code quality, and dependency management — and returns a structured report.
 
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the design decisions and tradeoffs behind how this is built.
+
 ## Problem
 
 Engineering teams often need to make sure repositories meet minimum standards before being deployed or onboarded into a platform. RepoGuard automates those checks and produces a clear scan report instead of relying on manual review.
