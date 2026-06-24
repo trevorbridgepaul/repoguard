@@ -17,6 +17,9 @@ POLICY_ID = "readme_exists"
 
 class ReadmeExistsPolicy(Policy):
     policy_id = POLICY_ID
+    name = "README Exists"
+    description = "Checks that a README.md file is present at the repository root."
+    severity = Severity.MEDIUM
 
     def check(self, repo_path: str) -> list[Finding]:
         """

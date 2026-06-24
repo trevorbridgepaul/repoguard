@@ -22,6 +22,9 @@ DEFAULT_HEADER_LINES = 5
 
 class LicenseHeaderPolicy(Policy):
     policy_id = POLICY_ID
+    name = "License Header"
+    description = "Flags .py files missing a configured license header near the top of the file."
+    severity = Severity.LOW
 
     def __init__(
         self,

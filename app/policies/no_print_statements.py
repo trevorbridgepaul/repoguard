@@ -21,6 +21,9 @@ _PRINT_PATTERN = re.compile(r"\bprint\s*\(")
 
 class NoPrintStatementsPolicy(Policy):
     policy_id = POLICY_ID
+    name = "No Print Statements"
+    description = "Flags print() calls left in .py files."
+    severity = Severity.LOW
 
     def check(self, repo_path: str) -> list[Finding]:
         findings: list[Finding] = []

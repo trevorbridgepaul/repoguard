@@ -20,6 +20,9 @@ DEFAULT_MAX_BYTES = 1_000_000  # 1 MB
 
 class LargeFilesPolicy(Policy):
     policy_id = POLICY_ID
+    name = "Large Files"
+    description = "Flags files over a configurable size threshold."
+    severity = Severity.MEDIUM
 
     def __init__(self, max_bytes: int = DEFAULT_MAX_BYTES) -> None:
         self.max_bytes = max_bytes
