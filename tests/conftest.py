@@ -15,16 +15,25 @@ code being tested never leak into the next test.
 `client` is a TestClient with get_db overridden to use that same
 db_session, so requests made through it share the transaction.
 
-`auth_headers` registers a throwaway user and logs in for a real JWT,
-for tests against endpoints that require authentication.
+`auth_headers`/`other_auth_headers` each register a throwaway user and
+log in for a real JWT, for tests against endpoints that require
+authentication or that need two distinct users (ownership scoping).
+
+`test_user` creates a real UserRecord directly (no HTTP round-trip) for
+storage-layer tests that just need a valid owner_id to satisfy the
+scans.owner_id foreign key.
 """
+
+from datetime import datetime, timezone
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import event
 from sqlalchemy.orm import Session
 
+from app.auth.security import hash_password
 from app.main import app
+from app.storage.db_models import UserRecord
 from app.storage.engine import engine, get_db
 
 
@@ -74,3 +83,29 @@ def auth_headers(client):
     )
     token = response.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def other_auth_headers(client):
+    client.post(
+        "/api/v1/auth/register",
+        json={"username": "other-test-user", "password": "other-test-password"},
+    )
+    response = client.post(
+        "/api/v1/auth/login",
+        data={"username": "other-test-user", "password": "other-test-password"},
+    )
+    token = response.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def test_user(db_session):
+    user = UserRecord(
+        username="storage-test-user",
+        hashed_password=hash_password("irrelevant"),
+        created_at=datetime.now(timezone.utc),
+    )
+    db_session.add(user)
+    db_session.flush()
+    return user

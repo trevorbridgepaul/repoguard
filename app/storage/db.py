@@ -15,11 +15,16 @@ from app.domain.models import Finding, ScanResult
 from app.storage.db_models import FindingRecord, ScanRecord
 
 
-def save_scan(db: Session, result: ScanResult) -> None:
-    """Save or overwrite a scan result, keyed by its scan_id."""
+def save_scan(db: Session, result: ScanResult, owner_id: int) -> None:
+    """
+    Save or overwrite a scan result, keyed by its scan_id.
+
+    owner_id is only set when creating a new record — overwriting an
+    existing scan_id never reassigns ownership.
+    """
     record = db.get(ScanRecord, result.scan_id)
     if record is None:
-        record = ScanRecord(scan_id=result.scan_id)
+        record = ScanRecord(scan_id=result.scan_id, owner_id=owner_id)
         db.add(record)
 
     record.repo_path = result.repo_path
@@ -41,9 +46,20 @@ def save_scan(db: Session, result: ScanResult) -> None:
     db.commit()
 
 
-def get_scan(db: Session, scan_id: str) -> Optional[ScanResult]:
-    """Look up a scan result by id. Returns None if not found."""
-    record = db.get(ScanRecord, scan_id)
+def get_scan(db: Session, scan_id: str, owner_id: int) -> Optional[ScanResult]:
+    """
+    Look up a scan result by id, scoped to its owner.
+
+    Returns None both when the scan doesn't exist at all and when it
+    exists but belongs to a different owner — the API layer turns
+    both cases into the same 404, so a caller can't use this to probe
+    whether a given scan_id exists.
+    """
+    record = (
+        db.query(ScanRecord)
+        .filter(ScanRecord.scan_id == scan_id, ScanRecord.owner_id == owner_id)
+        .first()
+    )
     if record is None:
         return None
 

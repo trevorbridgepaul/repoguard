@@ -40,6 +40,9 @@ class ScanRecord(Base):
     __tablename__ = "scans"
 
     scan_id: Mapped[str] = mapped_column(String, primary_key=True)
+    owner_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=False
+    )
     repo_path: Mapped[str] = mapped_column(String, nullable=False)
     status: Mapped[ScanStatus] = mapped_column(SqlEnum(ScanStatus), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

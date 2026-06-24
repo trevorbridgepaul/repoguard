@@ -110,3 +110,16 @@ def test_get_scan_without_token_returns_401(client):
     response = client.get("/api/v1/scans/some-scan-id")
 
     assert response.status_code == 401
+
+
+def test_get_scan_created_by_another_user_returns_404(
+    client, auth_headers, other_auth_headers, tmp_path
+):
+    create_response = client.post(
+        "/api/v1/scans", json={"repo_path": str(tmp_path)}, headers=auth_headers
+    )
+    scan_id = create_response.json()["scan_id"]
+
+    response = client.get(f"/api/v1/scans/{scan_id}", headers=other_auth_headers)
+
+    assert response.status_code == 404

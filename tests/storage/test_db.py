@@ -1,6 +1,6 @@
 """
 Tests for Postgres-backed scan storage, against a real database (see
-tests/conftest.py for the db_session fixture — no mocking).
+tests/conftest.py for the db_session/test_user fixtures — no mocking).
 """
 
 from app.domain.enums import ScanStatus, Severity
@@ -8,11 +8,11 @@ from app.domain.models import Finding, ScanResult
 from app.storage.db import get_scan, save_scan
 
 
-def test_save_then_get_returns_equivalent_result(db_session):
+def test_save_then_get_returns_equivalent_result(db_session, test_user):
     result = ScanResult(repo_path="/tmp/repo")
 
-    save_scan(db_session, result)
-    fetched = get_scan(db_session, result.scan_id)
+    save_scan(db_session, result, owner_id=test_user.id)
+    fetched = get_scan(db_session, result.scan_id, owner_id=test_user.id)
 
     assert fetched is not None
     assert fetched.scan_id == result.scan_id
@@ -20,11 +20,19 @@ def test_save_then_get_returns_equivalent_result(db_session):
     assert fetched.status == ScanStatus.PENDING
 
 
-def test_get_returns_none_for_unknown_scan_id(db_session):
-    assert get_scan(db_session, "not-a-real-scan-id") is None
+def test_get_returns_none_for_unknown_scan_id(db_session, test_user):
+    assert get_scan(db_session, "not-a-real-scan-id", owner_id=test_user.id) is None
 
 
-def test_save_persists_findings(db_session):
+def test_get_returns_none_for_a_different_owner(db_session, test_user):
+    other_owner_id = test_user.id + 1
+    result = ScanResult(repo_path="/tmp/repo")
+    save_scan(db_session, result, owner_id=test_user.id)
+
+    assert get_scan(db_session, result.scan_id, owner_id=other_owner_id) is None
+
+
+def test_save_persists_findings(db_session, test_user):
     result = ScanResult(repo_path="/tmp/repo")
     result.findings.append(
         Finding(
@@ -36,8 +44,8 @@ def test_save_persists_findings(db_session):
         )
     )
 
-    save_scan(db_session, result)
-    fetched = get_scan(db_session, result.scan_id)
+    save_scan(db_session, result, owner_id=test_user.id)
+    fetched = get_scan(db_session, result.scan_id, owner_id=test_user.id)
 
     assert len(fetched.findings) == 1
     assert fetched.findings[0].policy_id == "no_secrets"
@@ -45,28 +53,28 @@ def test_save_persists_findings(db_session):
     assert fetched.findings[0].line == 3
 
 
-def test_save_overwrites_existing_scan_with_same_id(db_session):
+def test_save_overwrites_existing_scan_with_same_id(db_session, test_user):
     original = ScanResult(repo_path="/tmp/repo")
-    save_scan(db_session, original)
+    save_scan(db_session, original, owner_id=test_user.id)
 
     updated = ScanResult(repo_path="/tmp/repo-updated", scan_id=original.scan_id)
-    save_scan(db_session, updated)
+    save_scan(db_session, updated, owner_id=test_user.id)
 
-    fetched = get_scan(db_session, original.scan_id)
+    fetched = get_scan(db_session, original.scan_id, owner_id=test_user.id)
 
     assert fetched.repo_path == "/tmp/repo-updated"
 
 
-def test_save_overwrite_replaces_findings_not_appends(db_session):
+def test_save_overwrite_replaces_findings_not_appends(db_session, test_user):
     original = ScanResult(repo_path="/tmp/repo")
     original.findings.append(
         Finding(policy_id="readme_exists", path=".", message="missing", severity=Severity.MEDIUM)
     )
-    save_scan(db_session, original)
+    save_scan(db_session, original, owner_id=test_user.id)
 
     updated = ScanResult(repo_path="/tmp/repo", scan_id=original.scan_id)
-    save_scan(db_session, updated)
+    save_scan(db_session, updated, owner_id=test_user.id)
 
-    fetched = get_scan(db_session, original.scan_id)
+    fetched = get_scan(db_session, original.scan_id, owner_id=test_user.id)
 
     assert fetched.findings == []
