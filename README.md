@@ -39,6 +39,15 @@ python3 -m venv .venv
 
 Then visit `http://127.0.0.1:8000/docs` for interactive API docs.
 
+## Running with Docker
+
+```bash
+docker build -t repoguard .
+docker run -p 8000:8000 -v "$(pwd)":/scan-target:ro repoguard
+```
+
+The container only has its own code on disk — mount whatever repo you want to scan (read-only is enough) and pass its in-container path, e.g. `/scan-target`, as `repo_path` when calling `POST /api/v1/scans`.
+
 ## Tests
 
 ```bash
@@ -57,6 +66,4 @@ Then visit `http://127.0.0.1:8000/docs` for interactive API docs.
 These were intentionally deferred to get the core scanning logic working first, not abandoned:
 
 - A real database (currently an in-memory store, cleared on restart)
-- Docker
-- CI (GitHub Actions)
 - Auth
