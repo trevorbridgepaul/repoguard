@@ -1,5 +1,6 @@
 """
-Scans API.
+Scans API. Both endpoints require a valid JWT (see app/auth) — register
+and log in via app/api/v1/auth.py to get one.
 
 POST /api/v1/scans   — submit a repo for scanning, run it synchronously,
                         store the result, and return it.
@@ -18,10 +19,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from app.auth.dependencies import get_current_user
 from app.domain.enums import Severity, ScanStatus
 from app.domain.models import ScanRequest, ScanResult
 from app.scanner.engine import run_scan
 from app.storage.db import get_scan, save_scan
+from app.storage.db_models import UserRecord
 from app.storage.engine import get_db
 
 router = APIRouter(prefix="/api/v1", tags=["scans"])
@@ -75,7 +78,9 @@ class ScanResultResponse(BaseModel):
 
 @router.post("/scans", response_model=ScanResultResponse, status_code=201)
 def create_scan(
-    body: ScanRequestBody, db: Session = Depends(get_db)
+    body: ScanRequestBody,
+    db: Session = Depends(get_db),
+    current_user: UserRecord = Depends(get_current_user),
 ) -> ScanResultResponse:
     if not Path(body.repo_path).is_dir():
         raise HTTPException(
@@ -90,7 +95,11 @@ def create_scan(
 
 
 @router.get("/scans/{scan_id}", response_model=ScanResultResponse)
-def get_scan_by_id(scan_id: str, db: Session = Depends(get_db)) -> ScanResultResponse:
+def get_scan_by_id(
+    scan_id: str,
+    db: Session = Depends(get_db),
+    current_user: UserRecord = Depends(get_current_user),
+) -> ScanResultResponse:
     result = get_scan(db, scan_id)
     if result is None:
         raise HTTPException(status_code=404, detail=f"Scan not found: {scan_id}")

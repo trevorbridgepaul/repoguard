@@ -4,10 +4,14 @@ SQLAlchemy ORM models for scan persistence.
 These are persistence-layer representations, distinct from the plain
 dataclasses in app/domain/models.py — the domain layer doesn't know
 about SQLAlchemy, and this layer doesn't know about FastAPI/Pydantic.
-Conversion between the two happens in app/storage/db.py.
+Conversion between ScanRecord/FindingRecord and ScanResult/Finding
+happens in app/storage/db.py.
 
-Two normalized tables (not a single JSONB blob) so the schema mirrors
-the existing ScanResult/Finding relationship directly.
+ScanRecord/FindingRecord are normalized tables (not a single JSONB
+blob) so the schema mirrors the existing ScanResult/Finding
+relationship directly. UserRecord has no domain dataclass counterpart
+— auth is a persistence/API concern with no scanning logic to keep
+framework-agnostic.
 """
 
 from datetime import datetime
@@ -21,6 +25,15 @@ from app.domain.enums import ScanStatus, Severity
 
 class Base(DeclarativeBase):
     pass
+
+
+class UserRecord(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    username: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
+    hashed_password: Mapped[str] = mapped_column(String, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
 class ScanRecord(Base):
