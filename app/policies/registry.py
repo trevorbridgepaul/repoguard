@@ -10,6 +10,7 @@ from app.policies.base import Policy
 from app.policies.codeowners_exists import CodeownersExistsPolicy
 from app.policies.gitignore_exists import GitignoreExistsPolicy
 from app.policies.large_files import LargeFilesPolicy
+from app.policies.license_header import LicenseHeaderPolicy
 from app.policies.no_print_statements import NoPrintStatementsPolicy
 from app.policies.no_secrets import NoSecretsPolicy
 from app.policies.readme_exists import ReadmeExistsPolicy
@@ -23,6 +24,7 @@ _REGISTRY: dict[str, Policy] = {
         NoSecretsPolicy(),
         LargeFilesPolicy(),
         NoPrintStatementsPolicy(),
+        LicenseHeaderPolicy(),
     ]
 }
 
