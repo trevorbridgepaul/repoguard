@@ -5,7 +5,7 @@ Each test creates real files under pytest's tmp_path fixture — no mocking.
 """
 
 from app.domain.enums import Severity
-from app.policies.no_secrets import NoSecretsPolicy, POLICY_ID
+from app.policies.no_secrets import MAX_READABLE_BYTES, NoSecretsPolicy, POLICY_ID
 
 policy = NoSecretsPolicy()
 
@@ -95,3 +95,12 @@ def test_multiple_secrets_in_different_files_are_all_reported(tmp_path):
     findings = policy.check(str(tmp_path))
 
     assert len(findings) == 2
+
+
+def test_skips_files_over_max_readable_bytes(tmp_path):
+    padding = "x" * (MAX_READABLE_BYTES + 1)
+    (tmp_path / "huge.py").write_text(f"AWS_KEY = 'AKIAABCDEFGHIJKLMNOP'\n{padding}")
+
+    findings = policy.check(str(tmp_path))
+
+    assert findings == []

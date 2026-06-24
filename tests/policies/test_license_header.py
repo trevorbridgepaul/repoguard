@@ -95,3 +95,13 @@ def test_empty_file_is_flagged(tmp_path):
     findings = policy.check(str(tmp_path))
 
     assert len(findings) == 1
+
+
+def test_header_check_does_not_require_reading_whole_huge_file(tmp_path):
+    # 10MB of body after a valid header — only the header should matter.
+    body = "x = 1\n" * 2_000_000
+    (tmp_path / "huge.py").write_text(f"# Copyright 2026 Acme Corp\n{body}")
+
+    findings = policy.check(str(tmp_path))
+
+    assert findings == []

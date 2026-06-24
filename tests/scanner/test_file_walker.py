@@ -59,3 +59,23 @@ def test_missing_gitignore_does_not_raise(tmp_path):
     paths = list(walk_files(str(tmp_path)))
 
     assert paths == [Path("a.txt")]
+
+
+def test_self_referential_symlink_does_not_cause_infinite_walk(tmp_path):
+    (tmp_path / "real.txt").write_text("content")
+    (tmp_path / "loop").symlink_to(tmp_path, target_is_directory=True)
+
+    paths = list(walk_files(str(tmp_path)))
+
+    assert paths == [Path("real.txt")]
+
+
+def test_nested_symlink_pointing_to_ancestor_does_not_cause_infinite_walk(tmp_path):
+    subdir = tmp_path / "src"
+    subdir.mkdir()
+    (subdir / "main.py").write_text("print('hi')")
+    (subdir / "loop").symlink_to(tmp_path, target_is_directory=True)
+
+    paths = list(walk_files(str(tmp_path)))
+
+    assert paths == [Path("src/main.py")]
