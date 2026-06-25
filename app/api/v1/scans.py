@@ -1,11 +1,13 @@
 """
-Scans API. Both endpoints require a valid JWT (see app/auth) — register
+Scans API. Every endpoint requires a valid JWT (see app/auth) — register
 and log in via app/api/v1/auth.py to get one. Scans are scoped to the
 authenticated user who created them; a different user's GET on the
 same scan_id 404s exactly like an unknown id (see app/storage/db.py).
 
 POST /api/v1/scans   — submit a repo for scanning, run it synchronously,
                         store the result, and return it.
+GET  /api/v1/scans   — list the caller's own scans, newest first. No
+                        pagination — not justified at this scale.
 GET  /api/v1/scans/{scan_id} — poll for a previously submitted scan's result.
 
 Synchronous execution is an intentional MVP choice (see domain/models.py
@@ -25,7 +27,7 @@ from app.auth.dependencies import get_current_user
 from app.domain.enums import Severity, ScanStatus
 from app.domain.models import ScanRequest, ScanResult
 from app.scanner.engine import run_scan
-from app.storage.db import get_scan, save_scan
+from app.storage.db import get_scan, list_scans, save_scan
 from app.storage.db_models import UserRecord
 from app.storage.engine import get_db
 
@@ -94,6 +96,15 @@ def create_scan(
     result = run_scan(request)
     save_scan(db, result, owner_id=current_user.id)
     return ScanResultResponse.from_domain(result)
+
+
+@router.get("/scans", response_model=list[ScanResultResponse])
+def list_my_scans(
+    db: Session = Depends(get_db),
+    current_user: UserRecord = Depends(get_current_user),
+) -> list[ScanResultResponse]:
+    """List the authenticated user's own scans, newest first. No pagination."""
+    return [ScanResultResponse.from_domain(result) for result in list_scans(db, owner_id=current_user.id)]
 
 
 @router.get("/scans/{scan_id}", response_model=ScanResultResponse)
