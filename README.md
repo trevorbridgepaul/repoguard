@@ -30,6 +30,7 @@ Every check, including `.gitignore` handling, runs against the real filesystem �
 - `POST /api/v1/scans` — **requires auth** (`Authorization: Bearer <token>`) — submit a `repo_path` (and optionally a subset of `policies`), runs synchronously, returns the completed scan
 - `GET /api/v1/scans/{scan_id}` — **requires auth** — poll for a previously submitted scan's result. Scoped to the user who created it; a different user's `GET` on the same `scan_id` 404s exactly like an unknown id, so it can't be used to probe which scan_ids exist.
 - `GET /api/v1/policies` — public, no auth — list every registered policy and its metadata
+- `GET /healthz` — public, no auth, unversioned — actually queries the database; 503 if it's unreachable
 
 Scan results are persisted in Postgres. `/docs` has a working "Authorize" button — register, log in, paste the token, and you can call the protected endpoints directly from there.
 
