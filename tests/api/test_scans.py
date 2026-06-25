@@ -123,3 +123,43 @@ def test_get_scan_created_by_another_user_returns_404(
     response = client.get(f"/api/v1/scans/{scan_id}", headers=other_auth_headers)
 
     assert response.status_code == 404
+
+
+def test_list_scans_returns_empty_list_for_new_user(client, auth_headers):
+    response = client.get("/api/v1/scans", headers=auth_headers)
+
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+def test_list_scans_returns_created_scans(client, auth_headers, tmp_path):
+    create_response = client.post(
+        "/api/v1/scans", json={"repo_path": str(tmp_path)}, headers=auth_headers
+    )
+    scan_id = create_response.json()["scan_id"]
+
+    response = client.get("/api/v1/scans", headers=auth_headers)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body) == 1
+    assert body[0]["scan_id"] == scan_id
+
+
+def test_list_scans_does_not_include_another_users_scans(
+    client, auth_headers, other_auth_headers, tmp_path
+):
+    client.post(
+        "/api/v1/scans", json={"repo_path": str(tmp_path)}, headers=auth_headers
+    )
+
+    response = client.get("/api/v1/scans", headers=other_auth_headers)
+
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+def test_list_scans_without_token_returns_401(client):
+    response = client.get("/api/v1/scans")
+
+    assert response.status_code == 401

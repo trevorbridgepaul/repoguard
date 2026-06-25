@@ -3,9 +3,12 @@ Tests for Postgres-backed scan storage, against a real database (see
 tests/conftest.py for the db_session/test_user fixtures — no mocking).
 """
 
+from datetime import datetime, timezone
+
 from app.domain.enums import ScanStatus, Severity
 from app.domain.models import Finding, ScanResult
-from app.storage.db import get_scan, save_scan
+from app.storage.db import get_scan, list_scans, save_scan
+from app.storage.db_models import UserRecord
 
 
 def test_save_then_get_returns_equivalent_result(db_session, test_user):
@@ -78,3 +81,41 @@ def test_save_overwrite_replaces_findings_not_appends(db_session, test_user):
     fetched = get_scan(db_session, original.scan_id, owner_id=test_user.id)
 
     assert fetched.findings == []
+
+
+def test_list_scans_returns_empty_list_for_user_with_no_scans(db_session, test_user):
+    assert list_scans(db_session, owner_id=test_user.id) == []
+
+
+def test_list_scans_returns_only_the_owners_scans(db_session, test_user):
+    other_user = UserRecord(
+        username="other-storage-test-user",
+        hashed_password="irrelevant",
+        created_at=datetime.now(timezone.utc),
+    )
+    db_session.add(other_user)
+    db_session.flush()
+
+    mine = ScanResult(repo_path="/tmp/mine")
+    save_scan(db_session, mine, owner_id=test_user.id)
+    theirs = ScanResult(repo_path="/tmp/theirs")
+    save_scan(db_session, theirs, owner_id=other_user.id)
+
+    results = list_scans(db_session, owner_id=test_user.id)
+
+    assert [r.scan_id for r in results] == [mine.scan_id]
+
+
+def test_list_scans_orders_newest_first(db_session, test_user):
+    older = ScanResult(
+        repo_path="/tmp/older", created_at=datetime(2026, 1, 1, tzinfo=timezone.utc)
+    )
+    newer = ScanResult(
+        repo_path="/tmp/newer", created_at=datetime(2026, 1, 2, tzinfo=timezone.utc)
+    )
+    save_scan(db_session, older, owner_id=test_user.id)
+    save_scan(db_session, newer, owner_id=test_user.id)
+
+    results = list_scans(db_session, owner_id=test_user.id)
+
+    assert [r.scan_id for r in results] == [newer.scan_id, older.scan_id]

@@ -46,6 +46,17 @@ def save_scan(db: Session, result: ScanResult, owner_id: int) -> None:
     db.commit()
 
 
+def list_scans(db: Session, owner_id: int) -> list[ScanResult]:
+    """List every scan owned by owner_id, newest first."""
+    records = (
+        db.query(ScanRecord)
+        .filter(ScanRecord.owner_id == owner_id)
+        .order_by(ScanRecord.created_at.desc())
+        .all()
+    )
+    return [_to_domain(record) for record in records]
+
+
 def get_scan(db: Session, scan_id: str, owner_id: int) -> Optional[ScanResult]:
     """
     Look up a scan result by id, scoped to its owner.
@@ -63,6 +74,10 @@ def get_scan(db: Session, scan_id: str, owner_id: int) -> Optional[ScanResult]:
     if record is None:
         return None
 
+    return _to_domain(record)
+
+
+def _to_domain(record: ScanRecord) -> ScanResult:
     return ScanResult(
         repo_path=record.repo_path,
         scan_id=record.scan_id,
