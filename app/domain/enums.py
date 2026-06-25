@@ -30,8 +30,13 @@ class Severity(str, Enum):
 
     # Allow comparison by severity level (LOW < MEDIUM < HIGH < CRITICAL).
     # Without this, Python enums are not ordered by default.
-    def __lt__(self, other: "Severity") -> bool:
-        order = [Severity.LOW, Severity.MEDIUM, Severity.HIGH, Severity.CRITICAL]
+    def __lt__(self, other: str) -> bool:
+        order: list[str] = [
+            Severity.LOW,
+            Severity.MEDIUM,
+            Severity.HIGH,
+            Severity.CRITICAL,
+        ]
         return order.index(self) < order.index(other)
 
 
