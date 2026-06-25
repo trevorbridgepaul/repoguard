@@ -11,7 +11,10 @@ from sqlalchemy.orm import Session
 from app.api.v1.auth import router as auth_router
 from app.api.v1.policies import router as policies_router
 from app.api.v1.scans import router as scans_router
+from app.core.logging import configure_logging
 from app.storage.engine import get_db
+
+configure_logging()
 
 app = FastAPI(title="RepoGuard")
 app.include_router(scans_router)

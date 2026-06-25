@@ -34,6 +34,8 @@ Every check, including `.gitignore` handling, runs against the real filesystem �
 
 Scan results are persisted in Postgres. `/docs` has a working "Authorize" button — register, log in, paste the token, and you can call the protected endpoints directly from there.
 
+Application logs (scan start/finish, registration, login) are structured JSON on stdout — see `app/core/logging.py`. Uvicorn's own access/server logs are separate and stay in their default plain-text format.
+
 ## Running locally
 
 ```bash
@@ -70,6 +72,7 @@ Storage and API tests need a real Postgres connection with migrations applied (`
 - PyJWT / bcrypt (auth)
 - pathspec (`.gitignore` matching)
 - pytest / httpx
+- ruff / mypy (CI lint + type-check)
 
 ## Not yet implemented
 
